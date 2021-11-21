@@ -1,22 +1,24 @@
 import axios from "axios";
 import config from "../config";
+import { createClient } from "redis";
 
 class Scanner {
 
     static controlBoxScanName = 'Control Box';
     static tokensaleBoxScanName = 'Tokensale Box';
-    static campaignBoxesScanName = 'Tokensale Box';
+    static campaignBoxesScanName = 'Campaign Boxes';
 
-    constructor(uri) {
+    constructor(uri, controlBoxScanId, tokensaleBoxScanId, campaignBoxesScanId) {
+        // setup axios
         this.backend = axios.create({
             baseURL: uri,
             timeout: 5000,
-            headers: {"Content-Type": "applications/json"}
+            headers: {"Content-Type": "application/json"}
         })
 
-        this.controlBoxScanId = 1;  // TODO: read this id from storage
-        this.tokensaleBoxScanId = 33;  // TODO: read this id from storage
-        this.campaignBoxesScanId = 34;  // TODO: read this id from storage
+        this.controlBoxScanId = controlBoxScanId;
+        this.tokensaleBoxScanId = tokensaleBoxScanId;
+        this.campaignBoxesScanId = campaignBoxesScanId;
     }
 
     async listAllScans() {
@@ -33,7 +35,7 @@ class Scanner {
     async registerControlBox() {
         return this.backend.post(
             '/scan/register', {
-                'scanName': controlBoxScanName,
+                'scanName': Scanner.controlBoxScanName,
                 'trackingRule': {
                     'predicate': 'containsAsset',
                     'assetId': '72c3fbce3243d491d81eb564cdab1662b1f8d4c7e312b88870cec79b7cfd4321'
@@ -50,7 +52,7 @@ class Scanner {
     async registerTokensaleBox() {
         return this.backend.post(
             '/scan/register', {
-                'scanName': tokensaleBoxScanName,
+                'scanName': Scanner.tokensaleBoxScanName,
                 'trackingRule': {
                     'predicate': 'containsAsset',
                     'assetId': '15b0ae41c24230069ff96dacbac0932850ac0c2a0924daf72a39e88cbcf3acd5'
@@ -68,7 +70,7 @@ class Scanner {
     async registerCampaignBoxes() {
         return this.backend.post(
             '/scan/register', {
-                'scanName': campaignBoxesScanName,
+                'scanName': Scanner.campaignBoxesScanName,
                 'trackingRule': {
                     'predicate': 'containsAsset',
                     'assetId': '05b66b97e5802f6447b67fe30cb4055e14d6b17bb14f5f563d65c9622c43a659'
@@ -97,24 +99,35 @@ class Scanner {
 }
 
 (async() => {
-    var scanner = new Scanner(config.scanner.baseUri);
+    // setup redis
+    const redis = createClient();
+    await redis.connect();
+
+    var scanner = new Scanner(
+        config.scanner.baseUri,
+        await redis.get('controlBoxScanId'),
+        await redis.get('tokensaleBoxScanId'),
+        await redis.get('campaignBoxesScanId')
+    );
 
     const allScans = await scanner.listAllScans();
 
     // tell the scanner to search for control box if it is already not searching
     const controlBoxScans = allScans.filter(scan => scan.scanName == Scanner.controlBoxScanName)
     if (controlBoxScans.length == 0) {
-        scanner.registerControlBox();
+        const controlboxScanId = (await scanner.registerControlBox()).scanId;
+        redis.set('controlBoxScanId', controlboxScanId.toString());
     }
 
     // tell the scanner to search for campaign boxes if it is already not searching
     const campaignBoxesScans = allScans.filter(scan => scan.scanName == Scanner.campaignBoxesScanName)
     if (campaignBoxesScans.length == 0) {
-        scanner.registerCampaignBoxes();
+        const campaignBoxesScanId = (await scanner.registerCampaignBoxes()).scanId;
+        await redis.set('campaignBoxesScanId', campaignBoxesScanId.toString());
+    } else {
+        const campaignBoxes = await scanner.getCampaignBoxes();
+        console.log(campaignBoxes);
     }
-
-    const campaignBoxes = await scanner.getCampaignBoxes();
-    console.log(campaignBoxes);
 
     // TODO: store campaigns in the database
 })();
