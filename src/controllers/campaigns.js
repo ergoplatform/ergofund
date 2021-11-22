@@ -1,8 +1,13 @@
 import config from "../config";
-import Explorer from './explorer.js';
-
-var explorer = new Explorer(config.explorer.baseUri)
+import { createClient } from "redis";
 
 export async function getAllCampaigns(offset) {
-  return null
+  const redis = createClient();
+  await redis.connect();
+
+  const campaignBoxes = await redis.get('campaignBoxes');
+
+  redis.disconnect();
+
+  return JSON.parse(campaignBoxes);
 }
