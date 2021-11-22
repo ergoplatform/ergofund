@@ -41,7 +41,7 @@ class Scanner {
                     'assetId': '72c3fbce3243d491d81eb564cdab1662b1f8d4c7e312b88870cec79b7cfd4321'
                 }
             }
-        ).then(res => res.data)  // TODO: save the scanId in storage
+        ).then(res => res.data)
     }
 
     /**
@@ -58,7 +58,7 @@ class Scanner {
                     'assetId': '15b0ae41c24230069ff96dacbac0932850ac0c2a0924daf72a39e88cbcf3acd5'
                 }
             }
-        ).then(res => res.data)  // TODO: save the scanId in storage
+        ).then(res => res.data)
     }
 
     /**
@@ -76,7 +76,7 @@ class Scanner {
                     'assetId': '05b66b97e5802f6447b67fe30cb4055e14d6b17bb14f5f563d65c9622c43a659'
                 }  // TODO: validate additional conditions like the value and the registers
             }
-        ).then(res => res.data)  // TODO: save the scanId in storage
+        ).then(res => res.data)
     }
 
     async getControlBox() {
@@ -112,11 +112,18 @@ class Scanner {
 
     const allScans = await scanner.listAllScans();
 
-    // tell the scanner to search for control box if it is already not searching
+    // tell the scanner to search for the control box if it is already not searching
     const controlBoxScans = allScans.filter(scan => scan.scanName == Scanner.controlBoxScanName)
     if (controlBoxScans.length == 0) {
         const controlboxScanId = (await scanner.registerControlBox()).scanId;
         redis.set('controlBoxScanId', controlboxScanId.toString());
+    }
+
+    // tell the scanner to search for the tokensale box if it is already not searching
+    const tokensaleBoxScans = allScans.filter(scan => scan.scanName == Scanner.tokensaleBoxScanName)
+    if (tokensaleBoxScans.length == 0) {
+        const tokensaleBoxScanId = (await scanner.registerTokensaleBox()).scanId;
+        redis.set('tokensaleBoxScanId', tokensaleBoxScanId.toString());
     }
 
     // tell the scanner to search for campaign boxes if it is already not searching
@@ -126,8 +133,8 @@ class Scanner {
         await redis.set('campaignBoxesScanId', campaignBoxesScanId.toString());
     } else {
         const campaignBoxes = await scanner.getCampaignBoxes();
-        console.log(campaignBoxes);
+        await redis.set('campaignBoxes', JSON.stringify(campaignBoxes));
     }
 
-    // TODO: store campaigns in the database
+    redis.disconnect();
 })();
