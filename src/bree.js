@@ -17,7 +17,7 @@ const bree = new Bree({
   jobs: [
     {
       name: 'networkScanner',
-      interval: '10s'
+      interval: '30s'
     }
   ]
 });
