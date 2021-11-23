@@ -6,8 +6,9 @@
     "start": "npm run prod",
     "build": "npm-run-all clean transpile",
     "server": "node ./dist/bin/www",
-    "dev": "NODE_ENV=development npm-run-all build server",
-    "prod": "NODE_ENV=production npm-run-all build server",
+    "scheduler": "node ./dist/bree",
+    "dev": "NODE_ENV=development npm-run-all build --parallel server scheduler",
+    "prod": "NODE_ENV=production npm-run-all build --parallel server scheduler",
     "transpile": "babel ./src --out-dir dist/",
     "clean": "rimraf dist",
     "watch:dev": "nodemon"
