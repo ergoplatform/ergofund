@@ -100,7 +100,9 @@ class Scanner {
 
 (async() => {
     // setup redis
-    const redis = createClient();
+    const redis = createClient({
+        url: `redis://${config.redis.host}:${config.redis.port}`
+    });
     await redis.connect();
 
     var scanner = new Scanner(

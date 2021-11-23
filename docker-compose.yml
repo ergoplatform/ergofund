@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  ergofund:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - "scanner"
+      - "redis"
+  scanner:
+    build: https://github.com/ergoplatform/scanner.git
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./scanner-application.conf:/home/ergo/application.conf
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
