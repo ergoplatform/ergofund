@@ -119,6 +119,10 @@ class Scanner {
     if (controlBoxScans.length == 0) {
         const controlboxScanId = (await scanner.registerControlBox()).scanId;
         redis.set('controlBoxScanId', controlboxScanId.toString());
+    } else {
+        // cache the controlBox
+        const controlBox = await scanner.getControlBox();
+        await redis.set('controlBox', JSON.stringify(controlBox));
     }
 
     // tell the scanner to search for the tokensale box if it is already not searching
@@ -126,6 +130,10 @@ class Scanner {
     if (tokensaleBoxScans.length == 0) {
         const tokensaleBoxScanId = (await scanner.registerTokensaleBox()).scanId;
         redis.set('tokensaleBoxScanId', tokensaleBoxScanId.toString());
+    } else {
+        // cache the tokensaleBox 
+        const tokensaleBox = await scanner.getTokensaleBox();
+        await redis.set('tokensaleBox', JSON.stringify(tokensaleBox));
     }
 
     // tell the scanner to search for campaign boxes if it is already not searching
@@ -134,6 +142,7 @@ class Scanner {
         const campaignBoxesScanId = (await scanner.registerCampaignBoxes()).scanId;
         await redis.set('campaignBoxesScanId', campaignBoxesScanId.toString());
     } else {
+        // cache the campaign boxes
         const campaignBoxes = await scanner.getCampaignBoxes();
         await redis.set('campaignBoxes', JSON.stringify(campaignBoxes));
     }
