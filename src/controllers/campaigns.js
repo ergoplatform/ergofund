@@ -1,15 +1,16 @@
 import config from "../config";
 import { createClient } from "redis";
 
-export async function getAllCampaigns(offset) {
+export async function getAllCampaigns(limit, offset) {
   const redis = createClient({
     url: `redis://${config.redis.host}:${config.redis.port}`
   });
   await redis.connect();
 
-  const campaignBoxes = await redis.get('campaignBoxes');
+  var campaignBoxes = await redis.get('campaignBoxes');
+  campaignBoxes = JSON.parse(campaignBoxes);
 
   redis.disconnect();
 
-  return JSON.parse(campaignBoxes);
+  return campaignBoxes.slice(offset, offset + limit);
 }
