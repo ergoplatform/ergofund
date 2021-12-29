@@ -4,6 +4,7 @@ import logger from 'morgan';
 
 import indexRouter from './routes/index';
 import campaignsRouter from './routes/campaigns';
+import infoRouter from './routes/info';
 
 var app = express();
 
@@ -15,5 +16,6 @@ app.use(cookieParser());
 // API Routes
 app.use('/', indexRouter);
 app.use('/campaigns', campaignsRouter);
+app.use('/info', infoRouter);
 
 export default app;
